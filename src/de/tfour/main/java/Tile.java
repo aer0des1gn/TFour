@@ -41,7 +41,6 @@ public class Tile {
         this.y = y;
         this.visible = false;
         this.seen = false;
-        this.colorBase = 0;
         this.solid = false;
         this.animated = ANIMATION_TYPE.NONE;
         this.id = id;
@@ -49,33 +48,33 @@ public class Tile {
             default:
             case 0: //grass
                 this.name = "Grass";
-                this.colorBase = core.color(core.unhex("34a870"));
+                this.colorBase = core.color(core.unhex("ff34a870"));
                 break;
             case 1: //stone
                 this.name = "Stone";
-                this.colorBase = core.color(core.unhex("6d7078"));
+                this.colorBase = core.color(core.unhex("ff6d7078"));
                 this.solid = true;
                 break;
             case 2: //water
                 this.name = "Water";
-                this.colorBase = core.color(core.unhex("1f50cc"));
+                this.colorBase = core.color(core.unhex("ff1f50cc"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SPARKLY;
                 break;
             case 3: //lava
                 this.name = "Lava";
-                this.colorBase = core.color(core.unhex("f52025"));
+                this.colorBase = core.color(core.unhex("fff52025"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SPARKLY;
                 break;
             case 4: //water shallow
                 this.name = "ShallowWater";
-                this.colorBase = core.color(core.unhex("407cff"));
+                this.colorBase = core.color(core.unhex("ff407cff"));
                 this.animated = ANIMATION_TYPE.SPARKLY;
                 break;
             case 5: //lava shallow
                 this.name = "ShallowLava";
-                this.colorBase = core.color(core.unhex("cc7a47"));
+                this.colorBase = core.color(core.unhex("ffcc7a47"));
                 this.animated = ANIMATION_TYPE.SPARKLY;
                 this.tileEvent = new TileEvent() {
                     @Override
@@ -86,26 +85,32 @@ public class Tile {
                 break;
             case 6: //gold
                 this.name = "Gold";
-                this.colorBase = core.color(core.unhex("f2a53f"));
+                this.colorBase = core.color(core.unhex("fff2a53f"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SHINY;
                 break;
             case 7: //carpet
                 this.name = "Carpet";
-                this.colorBase = core.color(core.unhex("a63a3a"));
+                core.println(core.unhex("a63a3a"));
+                this.colorBase = core.color(core.unhex("ffa63a3a"));
+                break;
         }
         this.items = new ArrayList<>();
 
+        //this.randomizeColor(10);
+        this.colorCurrent = colorBase;
+    }
+
+    private void randomizeColor(int bound) {
         float r = core.red(colorBase);
         float g = core.green(colorBase);
         float b = core.blue(colorBase);
 
-        float rand1 = core.random(-10, 10);
-        float rand2 = core.random(-10, 10);
-        float rand3 = core.random(-10, 10);
+        float rand1 = core.random(-bound, bound);
+        float rand2 = core.random(-bound, bound);
+        float rand3 = core.random(-bound, bound);
 
-        colorBase = core.color(r + rand1, g + rand2, b + rand3);
-        this.colorCurrent = colorBase;
+        this.colorBase = core.color(r + rand1, g + rand2, b + rand3);
     }
 
     public void drawAt(int x0, int y0, float percentage) {
@@ -148,7 +153,7 @@ public class Tile {
     }
 
     public void drawFog() {
-        core.fill(0,100);
+        core.fill(0, 100);
         core.rect(x * WIDTH, y * WIDTH, WIDTH, WIDTH);
     }
 

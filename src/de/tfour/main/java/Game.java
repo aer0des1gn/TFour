@@ -15,6 +15,9 @@ public class Game {
     private Tile[][] tiles;
     private Player player;
 
+    //how many tiles have been seen on the map
+    int seenTilesPercentage;
+
     //speech info
     private ArrayList<String> bubbleText = new ArrayList<>();
     private int bubbleDelay = 3;
@@ -56,6 +59,8 @@ public class Game {
         turnList.add(Creature.create(core, 2, 14, 'B'));
         turnList.add(Creature.create(core, 11, 2, 'B'));
         nextTurn();
+        updateTileVisibility();
+        updateSeenTilesPercentage();
     }
 
     public void draw() {
@@ -85,7 +90,7 @@ public class Game {
     }
 
     public void turnLogic() {
-        if (toMove.getActionsRemaining() == 0) {
+        if (toMove.getAp() == 0) {
             nextTurn();
         }
         if (!(toMove instanceof Player) && (toMove.getNextMoves() == null || toMove.getNextMoves().isEmpty())) {
@@ -242,18 +247,22 @@ public class Game {
 
     public void drawInfo() {
         core.fill(255);
-        core.rect(Tile.WIDTH * 5, -Tile.WIDTH, Tile.WIDTH * 5, Tile.WIDTH / 2);
+        //white hp bar
+        core.rect(Tile.WIDTH * 8, -Tile.WIDTH, Tile.WIDTH * 4, Tile.WIDTH / 4);
         core.textAlign(PConstants.LEFT, PConstants.CENTER);
-        core.text("AP: " + player.getActionsRemaining(), 0 + Tile.WIDTH / 2, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
+        core.text("AP: " + player.getAp(), Tile.WIDTH / 2, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
+        core.text("Map: " + seenTilesPercentage + "%", Tile.WIDTH * 12.5f, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
         core.textAlign(PConstants.RIGHT, PConstants.CENTER);
-        core.text("End Turn", 19 * Tile.WIDTH + Tile.WIDTH / 2, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
+        core.text("HP: 000/000", Tile.WIDTH * 7.5f, -Tile.WIDTH);
+        String turnbutton = player.myTurn ? "End Turn" : "AI Turn";
+        core.text(turnbutton, 19 * Tile.WIDTH + Tile.WIDTH / 2, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
         if (core.mouseX > 16 * Tile.WIDTH && core.mouseY < Tile.WIDTH && toMove.equals(player)) {
             core.fill(255, 255, 120);
-            core.text("End Turn", 19 * Tile.WIDTH + Tile.WIDTH / 2 + 1, -1.5f * Tile.WIDTH + Tile.WIDTH / 2 + 1);
+            core.text(turnbutton, 19 * Tile.WIDTH + Tile.WIDTH / 2 + 1, -1.5f * Tile.WIDTH + Tile.WIDTH / 2 + 1);
         }
+        //green hp bar
         core.fill(0, 255, 0);
-        core.stroke(0);
-        core.rect(Tile.WIDTH * 5, -Tile.WIDTH, core.map(player.getHp(), 0, player.getHpMax(), 0, Tile.WIDTH * 5), Tile.WIDTH / 2);
+        core.rect(Tile.WIDTH * 8, -Tile.WIDTH, core.map(player.getHp(), 0, player.getHpMax(), 0, Tile.WIDTH * 4), Tile.WIDTH / 4);
     }
 
     public void drawTextBubble(String text, int bubbleNumber) {
@@ -324,11 +333,10 @@ public class Game {
                     counter++;
                 }
             }
-            if (player.getTile().getNeighboursWithCreatures().contains(clickedTile)) {
-                player.attack(clickedTile.getCreature());
-            }
             if (player.isMyTurn()) {
-                if (player.getMovepool().contains(clickedTile))
+                if (player.getTile().getNeighboursWithCreatures().contains(clickedTile)) {
+                    player.attack(clickedTile.getCreature());
+                } else if (player.getMovepool().contains(clickedTile))
                     player.setNextMoves(astar(player.getTile(), clickedTile));
             }
         }
@@ -430,5 +438,17 @@ public class Game {
 
     public ArrayList<Creature> getTurnList() {
         return turnList;
+    }
+
+    public void updateSeenTilesPercentage() {
+        int noTiles = 0;
+        int noSeenTiles = 0;
+        for (Tile[] tt : tiles) {
+            for (Tile t : tt) {
+                noTiles++;
+                if (t.isSeen()) noSeenTiles++;
+            }
+        }
+        seenTilesPercentage = (int) core.map(noSeenTiles, 0, noTiles, 0, 100);
     }
 }

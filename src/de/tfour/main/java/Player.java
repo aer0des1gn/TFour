@@ -21,4 +21,11 @@ public class Player extends Creature {
             img[i] = core.loadImage("src/de/tfour/main/resources/player/p"+core.nf(i,2)+".png");
         }
     }
+
+    public boolean move(int direction) {
+        boolean out = super.move(direction);
+        core.getGame().updateTileVisibility();
+        core.getGame().updateSeenTilesPercentage();
+        return out;
+    }
 }
