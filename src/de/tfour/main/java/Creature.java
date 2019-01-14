@@ -66,7 +66,7 @@ public class Creature {
     //method that constructs a creature and then assigns it to a tile.
     public static Creature create(Core core, int x, int y, char model) {
         Creature c = new Creature(core, x, y, model);
-        Tile tile = core.getGame().getTile(x, y);
+        Tile tile = core.getGame().getMap().getTile(x, y);
         if (tile != null && tile.getCreature() == null) {
             tile.setCreature(c);
         }
@@ -199,13 +199,13 @@ public class Creature {
         }
         this.direction = direction;
         if (targetX == -1 || targetY == -1) return false;
-        Tile targetTile = core.getGame().getTile(targetX, targetY);
+        Tile targetTile = core.getGame().getMap().getTile(targetX, targetY);
         if (targetTile == null || targetTile.isSolid() || targetTile.getCreature() != null || !movepool.contains(targetTile))
             return false;
 
         //movement successful
         targetTile.setCreature(this);
-        core.getGame().getTile(x, y).setCreature(null);
+        core.getGame().getMap().getTile(x, y).setCreature(null);
         x = targetX;
         y = targetY;
         ArrayList<Item> items = targetTile.getItems();
@@ -247,7 +247,7 @@ public class Creature {
     }
 
     public Tile getTile() {
-        return core.getGame().getTile(x, y);
+        return core.getGame().getMap().getTile(x, y);
     }
 
     public HashSet<Tile> calcMovePool() {

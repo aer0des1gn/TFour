@@ -12,11 +12,7 @@ import java.util.HashSet;
 public class Game {
 
     private Core core;
-    private Tile[][] tiles;
     private Player player;
-
-    //how many tiles have been seen on the map
-    int seenTilesPercentage;
 
     //speech info
     private ArrayList<String> bubbleText = new ArrayList<>();
@@ -34,6 +30,10 @@ public class Game {
 
     //build mode vars
     private Tile buildModeTile;
+    private GameMap map;
+
+    String consoleText = "";
+    boolean consoleOn;
 
     public enum GameModes {
         PLAY, DEBUG, PLACE, BUILD
@@ -41,7 +41,7 @@ public class Game {
 
     public Game(Core core) {
         this.core = core;
-        tiles = new Tile[Core.widthInTiles][Core.heightInTiles];
+        this.map = new GameMap(core);
         backgroundColor = core.color(0);
     }
 
@@ -49,7 +49,7 @@ public class Game {
         this.mode = GameModes.PLAY;
         this.buildModeTile = new Tile(core, -1, -1, 0);
 
-        loadMap();
+        map.loadMap("map");
 
         Item.create(core, 3, 3, 'i');
         player = Player.create(core, 5, 5);
@@ -59,8 +59,8 @@ public class Game {
         turnList.add(Creature.create(core, 2, 14, 'B'));
         turnList.add(Creature.create(core, 11, 2, 'B'));
         nextTurn();
-        updateTileVisibility();
-        updateSeenTilesPercentage();
+        map.updateTileVisibility();
+        map.updateSeenTilesPercentage();
     }
 
     public void draw() {
@@ -75,18 +75,11 @@ public class Game {
         turnLogic();
         //draw
         drawBackground();
-        drawTiles();
-        updateTileVisibility();
-        drawItemsAndCreatures();
+        map.drawTiles();
+        map.updateTileVisibility();
+        map.drawItemsAndCreatures();
         drawOverlay();
         drawInfo();
-    }
-
-    public void updateTileVisibility() {
-        for (Tile t : player.getTile().getTilesInRadius(4)) {
-            t.setSeen(true);
-            t.setVisible(true);
-        }
     }
 
     public void turnLogic() {
@@ -99,54 +92,9 @@ public class Game {
         manualMovementAllowed = player.isMyTurn();
     }
 
-    public ArrayList<Tile> astar(Tile start, Tile goal) {
-        int[][] hweight = new int[core.getGame().tiles.length][core.getGame().tiles[0].length];
-        int[][] gweight = new int[core.getGame().tiles.length][core.getGame().tiles[0].length];
-        ArrayList<Tile> openList = new ArrayList();
-        HashMap<Tile, Tile> predecessors = new HashMap<>();
-        HashSet closedList = new HashSet();
-        openList.add(start);
-        while (!openList.isEmpty()) {
-            Tile min = openList.get(0);
-            for (Tile t : openList) {
-                if (hweight[t.getX()][t.getY()] + gweight[t.getX()][t.getY()] < hweight[min.getX()][min.getY()] + gweight[min.getX()][min.getY()]) {
-                    min = t;
-                }
-            }
-            openList.remove(min);
-            if (min.equals(goal)) {
-                ArrayList<Tile> output = new ArrayList<>();
-                Tile tile = goal;
-                output.add(goal);
-                while (predecessors.get(tile) != null) {
-                    output.add(predecessors.get(tile));
-                    tile = predecessors.get(tile);
-                }
-                output.remove(start);
-                Collections.reverse(output);
-                return output;
-            }
-            closedList.add(min);
-            //expand
-            for (Tile successor : min.getViableNeighbours()) {
-                if (closedList.contains(successor))
-                    continue;
-                int tentative_g = gweight[min.getX()][min.getY()] + 1;
-                if (openList.contains(successor) && tentative_g >= gweight[successor.getX()][successor.getY()])
-                    continue;
-                predecessors.put(successor, min);
-                gweight[successor.getX()][successor.getY()] = tentative_g;
-                if (!openList.contains(successor)) {
-                    openList.add(successor);
-                }
-            }
-        }
-        return null;
-    }
-
     public void drawBuildMode() {
         drawBackground();
-        drawTiles();
+        map.drawTiles();
         core.noStroke();
         buildModeTile.drawAt((int) (Tile.WIDTH / 2), (int) (-1.5f * Tile.WIDTH), 1);
         core.stroke(1);
@@ -172,35 +120,9 @@ public class Game {
         }
     }
 
-    public void drawTiles() {
-        core.noStroke();
-        //draw tiles themselves first
-        for (Tile[] tt : tiles) {
-            for (Tile t : tt) {
-                t.draw();
-                t.setVisible(false);
-            }
-        }
-    }
-
-    public void drawItemsAndCreatures() {
-        for (Tile[] tt : tiles) {
-            for (Tile t : tt) {
-                if (t.getCreature() != null) {
-                    Creature c = t.getCreature();
-                    if (c.getNextMoves() != null && !c.getNextMoves().isEmpty() && !c.isMoving()) {
-                        c.move(c.getNextMoves().remove(0));
-                    }
-                }
-                t.drawItems();
-                t.drawCreature();
-            }
-        }
-    }
-
     public void drawOverlay() {
         //fog
-        for (Tile[] tt : tiles) {
+        for (Tile[] tt : map.getTiles()) {
             for (Tile t : tt) {
                 if (!t.isVisible())
                     t.drawFog();
@@ -243,6 +165,13 @@ public class Game {
                 core.rect(t.getX() * Tile.WIDTH, t.getY() * Tile.WIDTH, Tile.WIDTH, Tile.WIDTH);
             }
         }
+
+        //console
+        if (consoleOn) {
+            core.textAlign(PConstants.LEFT, PConstants.CENTER);
+            core.fill(255);
+            core.text(consoleText, 10, core.height / 2);
+        }
     }
 
     public void drawInfo() {
@@ -251,7 +180,7 @@ public class Game {
         core.rect(Tile.WIDTH * 8, -Tile.WIDTH, Tile.WIDTH * 4, Tile.WIDTH / 4);
         core.textAlign(PConstants.LEFT, PConstants.CENTER);
         core.text("AP: " + player.getAp(), Tile.WIDTH / 2, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
-        core.text("Map: " + seenTilesPercentage + "%", Tile.WIDTH * 12.5f, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
+        core.text("Map: " + map.getSeenTilesPercentage() + "%", Tile.WIDTH * 12.5f, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
         core.textAlign(PConstants.RIGHT, PConstants.CENTER);
         core.text("HP: 000/000", Tile.WIDTH * 7.5f, -Tile.WIDTH);
         String turnbutton = player.myTurn ? "End Turn" : "AI Turn";
@@ -301,10 +230,10 @@ public class Game {
         if (core.mousePressed) {
             int posX = (int) (core.mouseX / Tile.WIDTH);
             int posY = (int) (core.mouseY / Tile.WIDTH - 1.5f);
-            Tile clickedTile = getTile(posX, posY);
+            Tile clickedTile = map.getTile(posX, posY);
             if (mode == GameModes.BUILD) {
                 if (core.mouseButton == PConstants.LEFT) {
-                    setTile(posX, posY, new Tile(core, posX, posY, buildModeTile.getId()));
+                    map.setTile(posX, posY, new Tile(core, posX, posY, buildModeTile.getId()));
                 } else if (core.mouseButton == PConstants.RIGHT) {
                     int id = buildModeTile.getId();
                     id++;
@@ -337,11 +266,23 @@ public class Game {
                 if (player.getTile().getNeighboursWithCreatures().contains(clickedTile)) {
                     player.attack(clickedTile.getCreature());
                 } else if (player.getMovepool().contains(clickedTile))
-                    player.setNextMoves(astar(player.getTile(), clickedTile));
+                    player.setNextMoves(map.astar(player.getTile(), clickedTile));
             }
         }
         //handle keyboard input
         if (core.keyPressed) {
+            if (core.key == '<') {
+                consoleOn = !consoleOn;
+            }
+            if (consoleOn) {
+                if (core.keyCode == PConstants.BACKSPACE) {
+                    consoleText = consoleText.substring(0, consoleText.length() - 1);
+                } else {
+                    if (core.key != '<') {
+                        consoleText += core.key;
+                    }
+                }
+            }
             if (core.key == '1') mode = (mode != GameModes.DEBUG) ? GameModes.DEBUG : GameModes.PLAY;
             if (core.key == '2') mode = (mode != GameModes.PLACE) ? GameModes.PLACE : GameModes.PLAY;
             if (core.key == '3') mode = (mode != GameModes.BUILD) ? GameModes.BUILD : GameModes.PLAY;
@@ -353,27 +294,7 @@ public class Game {
             }
             if ((core.key == 'E' || core.key == 'e') && player.isMyTurn()) nextTurn();
             if (core.key == 'N' || core.key == 'n') nextTurn();
-            if (core.key == 'S' || core.key == 's') saveMap("map2");
-        }
-    }
-
-    public void saveMap(String name) {
-        try {
-            FileWriter writer = new FileWriter("src/de/tfour/main/resources/" + name + ".txt");
-            PrintWriter print_line = new PrintWriter(writer);
-            String toWrite = "";
-            for (int y = 0; y < tiles[0].length; y++) {
-                for (int x = 0; x < tiles.length; x++) {
-                    toWrite += tiles[x][y].getId() + " ";
-                }
-                toWrite = toWrite.substring(0, toWrite.length() - 1);
-                toWrite += "\n";
-            }
-            toWrite = toWrite.substring(0, toWrite.length() - 1);
-            print_line.print(toWrite);
-            print_line.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (core.key == 'S' || core.key == 's') map.saveMap("map2");
         }
     }
 
@@ -383,15 +304,6 @@ public class Game {
         toMove = turnList.get(0);
         toMove.startTurn();
         Collections.rotate(turnList, 1);
-    }
-
-    public Tile getTile(int x, int y) {
-        if (x < 0 || y < 0 || x >= Core.widthInTiles || y >= Core.heightInTiles) return null;
-        return tiles[x][y];
-    }
-
-    public void setTile(int x, int y, Tile t) {
-        tiles[x][y] = t;
     }
 
     public GameModes getMode() {
@@ -406,32 +318,6 @@ public class Game {
         this.toMove = toMove;
     }
 
-    public void loadMap() {
-//        for (int i = 0; i < tiles.length; i++) {
-//            for (int j = 0; j < tiles[0].length; j++) {
-//                tiles[i][j] = new Tile(core, i, j, core.color(90, 225, 165), ' ', false);
-//            }
-//        }
-        File file = new File("src/de/tfour/main/resources/map2.txt");
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String st;
-            int y = 0;
-            while ((st = br.readLine()) != null) {
-                String[] chars = st.split(" ");
-                int x = 0;
-                for (String c : chars) {
-                    tiles[x][y] = new Tile(core, x, y, Integer.parseInt(c));
-                    x++;
-                }
-                y++;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        astar(getTile(3, 3), getTile(10, 10));
-    }
-
     public Creature getToMove() {
         return toMove;
     }
@@ -440,15 +326,11 @@ public class Game {
         return turnList;
     }
 
-    public void updateSeenTilesPercentage() {
-        int noTiles = 0;
-        int noSeenTiles = 0;
-        for (Tile[] tt : tiles) {
-            for (Tile t : tt) {
-                noTiles++;
-                if (t.isSeen()) noSeenTiles++;
-            }
-        }
-        seenTilesPercentage = (int) core.map(noSeenTiles, 0, noTiles, 0, 100);
+    public Player getPlayer() {
+        return player;
+    }
+
+    public GameMap getMap() {
+        return map;
     }
 }

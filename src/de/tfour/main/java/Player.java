@@ -6,7 +6,7 @@ public class Player extends Creature {
 
     public static Player create(Core core, int x, int y) {
         Player p = new Player(core,x,y);
-        Tile tile = core.getGame().getTile(x, y);
+        Tile tile = core.getGame().getMap().getTile(x, y);
         if (tile != null && tile.getCreature() == null) {
             tile.setCreature(p);
         }
@@ -24,8 +24,8 @@ public class Player extends Creature {
 
     public boolean move(int direction) {
         boolean out = super.move(direction);
-        core.getGame().updateTileVisibility();
-        core.getGame().updateSeenTilesPercentage();
+        core.getGame().getMap().updateTileVisibility();
+        core.getGame().getMap().updateSeenTilesPercentage();
         return out;
     }
 }

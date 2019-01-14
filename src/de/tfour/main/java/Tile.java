@@ -91,7 +91,6 @@ public class Tile {
                 break;
             case 7: //carpet
                 this.name = "Carpet";
-                core.println(core.unhex("a63a3a"));
                 this.colorBase = core.color(core.unhex("ffa63a3a"));
                 break;
         }
@@ -216,10 +215,10 @@ public class Tile {
 
     public ArrayList<Tile> getNeighbours() {
         ArrayList neighbours = new ArrayList();
-        neighbours.add(core.getGame().getTile(x + 1, y));
-        neighbours.add(core.getGame().getTile(x, y + 1));
-        neighbours.add(core.getGame().getTile(x - 1, y));
-        neighbours.add(core.getGame().getTile(x, y - 1));
+        neighbours.add(core.getGame().getMap().getTile(x + 1, y));
+        neighbours.add(core.getGame().getMap().getTile(x, y + 1));
+        neighbours.add(core.getGame().getMap().getTile(x - 1, y));
+        neighbours.add(core.getGame().getMap().getTile(x, y - 1));
         neighbours.removeAll(Collections.singleton(null));
         return neighbours;
     }
@@ -232,10 +231,10 @@ public class Tile {
 
     public ArrayList<Tile> getViableNeighbours() {
         ArrayList<Tile> neighbours = new ArrayList();
-        neighbours.add(core.getGame().getTile(x + 1, y));
-        neighbours.add(core.getGame().getTile(x, y + 1));
-        neighbours.add(core.getGame().getTile(x - 1, y));
-        neighbours.add(core.getGame().getTile(x, y - 1));
+        neighbours.add(core.getGame().getMap().getTile(x + 1, y));
+        neighbours.add(core.getGame().getMap().getTile(x, y + 1));
+        neighbours.add(core.getGame().getMap().getTile(x - 1, y));
+        neighbours.add(core.getGame().getMap().getTile(x, y - 1));
         neighbours.removeAll(Collections.singleton(null));
         neighbours.removeIf(t -> t.isSolid());
         neighbours.removeIf(t -> t.getCreature() != null);
@@ -253,7 +252,7 @@ public class Tile {
         ArrayList<Tile> tiles = new ArrayList<>();
         for (int i = x - radius; i <= x + radius; i++) {
             for (int i2 = y - radius; i2 <= y + radius; i2++) {
-                tiles.add(core.getGame().getTile(i, i2));
+                tiles.add(core.getGame().getMap().getTile(i, i2));
             }
         }
         tiles.removeAll(Collections.singleton(null));

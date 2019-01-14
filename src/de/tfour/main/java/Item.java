@@ -11,7 +11,7 @@ public class Item {
 
     public static Item create(Core core, int x, int y, char model) {
         Item e = new Item(core, x, y, model);
-        Tile tile = core.getGame().getTile(x, y);
+        Tile tile = core.getGame().getMap().getTile(x, y);
         if (tile != null && tile.hasItemSpace()) {
             tile.addItem(e);
             return e;
