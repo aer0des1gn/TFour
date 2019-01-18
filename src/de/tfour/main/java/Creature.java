@@ -94,7 +94,7 @@ public class Creature {
         this.movepool = calcMovePool();
         this.direction = 2;
         this.img = new PImage[12];
-        int randint = 1 + PApplet.floor(core.random(3));
+        int randint = 1 + PApplet.floor(core.random(5));
         for (int i = 0; i < 12; i++) {
             img[i] = core.loadImage("src/de/tfour/main/resources/enemy/e" + randint + PApplet.nf(i, 2) + ".png");
         }

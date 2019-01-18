@@ -140,15 +140,15 @@ class GameMap {
     }
 
     public void updateSeenTilesPercentage() {
-        int noTiles = 0;
-        int noSeenTiles = 0;
+        int numberOfTiles = 0;
+        int numberOfSeenTiles = 0;
         for (Tile[] tt : tiles) {
             for (Tile t : tt) {
-                noTiles++;
-                if (t.isSeen()) noSeenTiles++;
+                numberOfTiles++;
+                if (t.isSeen()) numberOfSeenTiles++;
             }
         }
-        seenTilesPercentage = (int) PApplet.map(noSeenTiles, 0, noTiles, 0, 100);
+        seenTilesPercentage = (int) PApplet.map(numberOfSeenTiles, 0, numberOfTiles, 0, 100);
     }
 
     public void setTile(int x, int y, Tile t) {

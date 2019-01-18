@@ -122,7 +122,7 @@ public class Tile {
     }
 
     public void draw() {
-        if (seen) {
+        if (seen || Game.ignoreFog) {
             if (animated != ANIMATION_TYPE.NONE) {
                 float amp = 15;
                 float r = core.red(colorBase);
@@ -156,6 +156,7 @@ public class Tile {
     }
 
     public void drawFog() {
+        if (Game.ignoreVisibility) return;
         core.fill(0, 100);
         core.rect(x * WIDTH, y * WIDTH, WIDTH, WIDTH);
     }

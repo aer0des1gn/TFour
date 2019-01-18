@@ -34,6 +34,8 @@ public class Game {
     private boolean consoleOn;
 
     private boolean inventoryOpen;
+    public static boolean ignoreFog = true;
+    public static boolean ignoreVisibility = true;
 
     public enum GameModes {
         PLAY, DEBUG, PLACE, BUILD
