@@ -1,17 +1,20 @@
 package de.tfour.main.java;
 
+import processing.core.PApplet;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class GameMap {
+class GameMap {
 
-    private Core core;
-    private Tile[][] tiles;
+    private final Core core;
+    private final Tile[][] tiles;
+    private String name = "devmap";
     //how many tiles have been seen on the map
-    int seenTilesPercentage;
+    private int seenTilesPercentage;
 
     public GameMap(Core core) {
         this.core = core;
@@ -45,16 +48,15 @@ public class GameMap {
     }
 
     public ArrayList<Tile> astar(Tile start, Tile goal) {
-        int[][] hweight = new int[tiles.length][tiles[0].length];
         int[][] gweight = new int[tiles.length][tiles[0].length];
-        ArrayList<Tile> openList = new ArrayList();
+        ArrayList<Tile> openList = new ArrayList<>();
         HashMap<Tile, Tile> predecessors = new HashMap<>();
-        HashSet closedList = new HashSet();
+        HashSet<Tile> closedList = new HashSet<>();
         openList.add(start);
         while (!openList.isEmpty()) {
             Tile min = openList.get(0);
             for (Tile t : openList) {
-                if (hweight[t.getX()][t.getY()] + gweight[t.getX()][t.getY()] < hweight[min.getX()][min.getY()] + gweight[min.getX()][min.getY()]) {
+                if (gweight[t.getX()][t.getY()] < gweight[min.getX()][min.getY()]) {
                     min = t;
                 }
             }
@@ -89,19 +91,19 @@ public class GameMap {
         return null;
     }
 
-    public void saveMap(String name) {
+    public void saveMap() {
         try {
             FileWriter writer = new FileWriter("src/de/tfour/main/resources/" + name + ".txt");
             PrintWriter print_line = new PrintWriter(writer);
-            String toWrite = "";
+            StringBuilder toWrite = new StringBuilder();
             for (int y = 0; y < tiles[0].length; y++) {
-                for (int x = 0; x < tiles.length; x++) {
-                    toWrite += tiles[x][y].getId() + " ";
+                for (Tile[] tile : tiles) {
+                    toWrite.append(tile[y].getId()).append(" ");
                 }
-                toWrite = toWrite.substring(0, toWrite.length() - 1);
-                toWrite += "\n";
+                toWrite = new StringBuilder(toWrite.substring(0, toWrite.length() - 1));
+                toWrite.append("\n");
             }
-            toWrite = toWrite.substring(0, toWrite.length() - 1);
+            toWrite = new StringBuilder(toWrite.substring(0, toWrite.length() - 1));
             print_line.print(toWrite);
             print_line.close();
         } catch (IOException e) {
@@ -110,6 +112,7 @@ public class GameMap {
     }
 
     public void loadMap(String mapName) {
+        this.name = mapName;
         File file = new File("src/de/tfour/main/resources/" + mapName + ".txt");
         try {
             BufferedReader br = new BufferedReader(new FileReader(file));
@@ -145,7 +148,7 @@ public class GameMap {
                 if (t.isSeen()) noSeenTiles++;
             }
         }
-        seenTilesPercentage = (int) core.map(noSeenTiles, 0, noTiles, 0, 100);
+        seenTilesPercentage = (int) PApplet.map(noSeenTiles, 0, noTiles, 0, 100);
     }
 
     public void setTile(int x, int y, Tile t) {

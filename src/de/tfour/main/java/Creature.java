@@ -10,58 +10,60 @@ import java.util.InputMismatchException;
 
 public class Creature {
 
-    protected Core core;
+    final Core core;
 
     //counts how many times the Creature constructor has been called
-    public static int creaturecount = 0;
+    private static int creaturecount = 0;
 
     //name of the creature
-    protected String name;
+    String name;
 
     //hitpoints (currently)
-    protected int hp;
+    private int hp;
     //hitpoint maximum
-    protected int hpMax;
+    private final int hpMax;
     //range in which the creature can detect other creatures
     protected int awareness;
 
     //tile position (e.g. 5|5)
-    protected int x, y;
+    private int x;
+    private int y;
     //current pixel position (e.g. a tile position of 5|5 means a pixel position of 5*Tile.WIDTH|5*Tile.WIDTH)
-    protected int pixelX, pixelY;
+    private int pixelX;
+    private int pixelY;
 
     //how many pixels a creature can move per frame
-    protected final int movespeed = 3;
+    private final int movespeed = 3;
     //counts how many pixels the creature moved since starting movement (necessary for the animation process)
-    protected int moveCount = 0;
+    private int moveCount = 0;
     //true if creature is moving, false if not
-    protected boolean moving;
+    private boolean moving;
     //direction in which the creature faces right now. 0 1 2 3 -> up left down right
-    protected int direction;
+    private int direction;
 
     //the sprite sheet of the character
-    protected PImage img[];
+    PImage[] img;
     //determines which sprite of the spritesheet should currently be drawn
-    protected int animationOffset = 1;
+    private int animationOffset = 1;
     //whether the animation of the sprites is running forwards or backwards
-    protected boolean animationForwards = true;
+    private boolean animationForwards = true;
     //a single char representing the creature. if there's no spritesheet (yet), this is drawn instead.
-    protected char model;
+    private final char model;
 
     //the creature's inventory
-    protected Inventory inventory;
+    private final Inventory inventory;
 
     //the pool of tiles which the creature can move to this turn, depending on ap currently remaining
-    protected HashSet<Tile> movepool;
+    private HashSet<Tile> movepool;
     //how many ap you currently have. ap stands for action points. most actions and movement cost ap.
-    protected int ap;
+    private int ap;
     //how many ap you start your turn with
-    protected int apPerTurn;
+    private final int apPerTurn;
     //movement buffer for the moves the creature will take in its next turns. this is where movement from pathfinding is stored.
-    protected ArrayList<Tile> nextMoves;
+    private ArrayList<Tile> nextMoves;
 
     //is true if it's the creature's turn, otherwise false
-    protected boolean myTurn = false;
+    boolean myTurn = false;
 
     //method that constructs a creature and then assigns it to a tile.
     public static Creature create(Core core, int x, int y, char model) {
@@ -74,7 +76,7 @@ public class Creature {
     }
 
     //constructor. direct use of the constructor is not recommended, because tile is not assigned. use create() instead.
-    protected Creature(Core core, int x, int y, char model) {
+    Creature(Core core, int x, int y, char model) {
         this.core = core;
         creaturecount++;
         this.x = x;
@@ -92,9 +94,9 @@ public class Creature {
         this.movepool = calcMovePool();
         this.direction = 2;
         this.img = new PImage[12];
-        int randint = 1 + core.floor(core.random(3));
+        int randint = 1 + PApplet.floor(core.random(3));
         for (int i = 0; i < 12; i++) {
-            img[i] = core.loadImage("src/de/tfour/main/resources/enemy/e" + randint + core.nf(i, 2) + ".png");
+            img[i] = core.loadImage("src/de/tfour/main/resources/enemy/e" + randint + PApplet.nf(i, 2) + ".png");
         }
     }
 
@@ -154,7 +156,7 @@ public class Creature {
         core.fill(255);
         core.rect(pixelX, pixelY, Tile.WIDTH, 10);
         core.fill(0, 255, 0);
-        core.rect(pixelX, pixelY, core.map(hp, 0, hpMax, 0, Tile.WIDTH), 10);
+        core.rect(pixelX, pixelY, PApplet.map(hp, 0, hpMax, 0, Tile.WIDTH), 10);
     }
 
     //move to an adjacent tile
@@ -172,7 +174,7 @@ public class Creature {
     }
 
     //move to an adjacent tile, based on a direction
-    public boolean move(int direction) {
+    boolean move(int direction) {
         //remember, WASD -> 0123
         if (direction > 3 || direction < 0) {
             throw new InputMismatchException();
@@ -223,13 +225,14 @@ public class Creature {
         return true;
     }
 
+    //calculates the current pixelpositions based on the tilegrid positions
     private void calculatePixelPositions() {
         pixelX = (int) (x * Tile.WIDTH);
         pixelY = (int) (y * Tile.WIDTH);
     }
 
     //this method is needed because the game disallows movement input while a creature is already moving.
-    public void setMoving(boolean isMoving) {
+    private void setMoving(boolean isMoving) {
         this.moving = isMoving;
         if (!moving) {
             core.getGame().setManualMovementAllowed(true);
@@ -250,7 +253,7 @@ public class Creature {
         return core.getGame().getMap().getTile(x, y);
     }
 
-    public HashSet<Tile> calcMovePool() {
+    private HashSet<Tile> calcMovePool() {
         Tile currentTile = getTile();
         HashSet<Tile> movepool = new HashSet<>();
         if (ap <= 0) {
@@ -297,7 +300,7 @@ public class Creature {
         actRandomly(ap);
     }
 
-    public void actRandomly(int howoften) {
+    private void actRandomly(int howoften) {
         //random movement
         if (nextMoves == null) nextMoves = new ArrayList<>();
         Tile tile = getTile();
@@ -359,10 +362,8 @@ public class Creature {
         return false;
     }
 
-    public void die() {
-        if (core.getGame().getTurnList().contains(this)) {
-            core.getGame().getTurnList().remove(this);
-        }
+    private void die() {
+        core.getGame().getTurnList().remove(this);
         ap = 0;
         getTile().setCreature(null);
     }
@@ -373,5 +374,9 @@ public class Creature {
         }
         ap--;
         movepool = calcMovePool();
+    }
+
+    public Inventory getInventory() {
+        return inventory;
     }
 }

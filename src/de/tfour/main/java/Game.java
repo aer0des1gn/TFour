@@ -3,20 +3,18 @@ package de.tfour.main.java;
 import processing.core.PApplet;
 import processing.core.PConstants;
 
-import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class Game {
 
-    private Core core;
+    private final Core core;
     private Player player;
 
     //speech info
-    private ArrayList<String> bubbleText = new ArrayList<>();
-    private int bubbleDelay = 3;
+    private final ArrayList<String> bubbleText = new ArrayList<>();
+    private final int bubbleDelay = 3;
     private int speechSecondsRemaining = 0;
     private int lastSecond = -1;
 
@@ -30,10 +28,12 @@ public class Game {
 
     //build mode vars
     private Tile buildModeTile;
-    private GameMap map;
+    private final GameMap map;
 
-    String consoleText = "";
-    boolean consoleOn;
+    private String consoleText = "";
+    private boolean consoleOn;
+
+    private boolean inventoryOpen;
 
     public enum GameModes {
         PLAY, DEBUG, PLACE, BUILD
@@ -75,14 +75,18 @@ public class Game {
         turnLogic();
         //draw
         drawBackground();
-        map.drawTiles();
-        map.updateTileVisibility();
-        map.drawItemsAndCreatures();
-        drawOverlay();
+        if (inventoryOpen) {
+            drawInventory();
+        } else {
+            map.drawTiles();
+            map.updateTileVisibility();
+            map.drawItemsAndCreatures();
+            drawOverlay();
+        }
         drawInfo();
     }
 
-    public void turnLogic() {
+    private void turnLogic() {
         if (toMove.getAp() == 0) {
             nextTurn();
         }
@@ -92,7 +96,13 @@ public class Game {
         manualMovementAllowed = player.isMyTurn();
     }
 
-    public void drawBuildMode() {
+    private void drawInventory() {
+        for (Item i : player.getInventory().getItems()) {
+
+        }
+    }
+
+    private void drawBuildMode() {
         drawBackground();
         map.drawTiles();
         core.noStroke();
@@ -103,7 +113,7 @@ public class Game {
         core.text("Current Tile: " + buildModeTile.getName(), Tile.WIDTH * 2, -1.5f * Tile.WIDTH + Tile.WIDTH / 2);
     }
 
-    public void drawBackground() {
+    private void drawBackground() {
         switch (mode) {
             case DEBUG:
                 core.background(127);
@@ -120,14 +130,9 @@ public class Game {
         }
     }
 
-    public void drawOverlay() {
+    private void drawOverlay() {
         //fog
-        for (Tile[] tt : map.getTiles()) {
-            for (Tile t : tt) {
-                if (!t.isVisible())
-                    t.drawFog();
-            }
-        }
+        Arrays.stream(map.getTiles()).flatMap(Arrays::stream).filter(tile -> !tile.isVisible()).forEachOrdered(Tile::drawFog);
         //handle speechBubble drawing
         if (speechSecondsRemaining == 0 && !bubbleText.isEmpty()) {
             bubbleText.remove(0);
@@ -138,7 +143,6 @@ public class Game {
             drawTextBubble(text, bubbleNum);
             bubbleNum++;
         }
-
         //draw player movepool
         if (player.isMyTurn()) {
             for (Tile t : player.getMovepool()) {
@@ -174,7 +178,7 @@ public class Game {
         }
     }
 
-    public void drawInfo() {
+    private void drawInfo() {
         core.fill(255);
         //white hp bar
         core.rect(Tile.WIDTH * 8, -Tile.WIDTH, Tile.WIDTH * 4, Tile.WIDTH / 4);
@@ -191,15 +195,16 @@ public class Game {
         }
         //green hp bar
         core.fill(0, 255, 0);
-        core.rect(Tile.WIDTH * 8, -Tile.WIDTH, core.map(player.getHp(), 0, player.getHpMax(), 0, Tile.WIDTH * 4), Tile.WIDTH / 4);
+        core.rect(Tile.WIDTH * 8, -Tile.WIDTH, PApplet.map(player.getHp(), 0, player.getHpMax(), 0, Tile.WIDTH * 4), Tile.WIDTH / 4);
     }
 
-    public void drawTextBubble(String text, int bubbleNumber) {
-        float yOffset = Tile.WIDTH;
+    private void drawTextBubble(String text, int bubbleNumber) {
+        @SuppressWarnings("SuspiciousNameCombination") float yOffset = Tile.WIDTH;
         float yOffComputed = yOffset * bubbleNumber;
         float y = 15.5f;
         core.fill(255);
-        core.triangle(Tile.WIDTH / 3, y * Tile.WIDTH - yOffComputed + Tile.WIDTH / 4,
+        core.triangle(
+                Tile.WIDTH / 3, y * Tile.WIDTH - yOffComputed + Tile.WIDTH / 4,
                 Tile.WIDTH * 2 / 3, y * Tile.WIDTH - yOffComputed + Tile.WIDTH / 4,
                 Tile.WIDTH / 2, y * Tile.WIDTH + Tile.WIDTH / 2 - yOffComputed);
         core.rect(0, (y - 0.75f) * Tile.WIDTH - yOffComputed + Tile.WIDTH / 4, core.textWidth(text), Tile.WIDTH * 3 / 4);
@@ -214,7 +219,7 @@ public class Game {
         core.noStroke();
     }
 
-    public void sendTextBubble(String text, int seconds) {
+    private void sendTextBubble(String text, int seconds) {
         bubbleText.add(text);
         speechSecondsRemaining = seconds;
     }
@@ -228,46 +233,7 @@ public class Game {
     public void handleInput() {
         //handle mouse press
         if (core.mousePressed) {
-            int posX = (int) (core.mouseX / Tile.WIDTH);
-            int posY = (int) (core.mouseY / Tile.WIDTH - 1.5f);
-            Tile clickedTile = map.getTile(posX, posY);
-            if (mode == GameModes.BUILD) {
-                if (core.mouseButton == PConstants.LEFT) {
-                    map.setTile(posX, posY, new Tile(core, posX, posY, buildModeTile.getId()));
-                } else if (core.mouseButton == PConstants.RIGHT) {
-                    int id = buildModeTile.getId();
-                    id++;
-                    if (id > Tile.HIGHEST_ID) id = 0;
-                    buildModeTile = new Tile(core, -1, -1, id);
-                } else if (core.mouseButton == PConstants.CENTER) {
-                    buildModeTile = new Tile(core, -1, -1, clickedTile.getId());
-                }
-                return;
-            }
-            //end turn button
-            if (core.mouseX > 16 * Tile.WIDTH && core.mouseY < Tile.WIDTH) {
-                if (core.mouseButton == PConstants.LEFT && player.isMyTurn()) {
-                    nextTurn();
-                }
-            }
-            if (mode == GameModes.PLACE) {
-                if (core.mouseButton == PConstants.LEFT) {
-                    Creature.create(core, posX, posY, 'x');
-                } else if (core.mouseButton == PConstants.RIGHT) {
-                    Item.create(core, posX, posY, 'i');
-                }
-            } else if (mode == GameModes.DEBUG) {
-                if (core.mouseButton == PConstants.CENTER) {
-                    sendTextBubble("test" + counter);
-                    counter++;
-                }
-            }
-            if (player.isMyTurn()) {
-                if (player.getTile().getNeighboursWithCreatures().contains(clickedTile)) {
-                    player.attack(clickedTile.getCreature());
-                } else if (player.getMovepool().contains(clickedTile))
-                    player.setNextMoves(map.astar(player.getTile(), clickedTile));
-            }
+            handleMouseInput();
         }
         //handle keyboard input
         if (core.keyPressed) {
@@ -294,7 +260,64 @@ public class Game {
             }
             if ((core.key == 'E' || core.key == 'e') && player.isMyTurn()) nextTurn();
             if (core.key == 'N' || core.key == 'n') nextTurn();
-            if (core.key == 'S' || core.key == 's') map.saveMap("map2");
+            if (core.key == 'S' || core.key == 's') map.saveMap();
+        }
+
+    }
+
+    private void handleMouseInput() {
+        int posX = (int) (core.mouseX / Tile.WIDTH);
+        int posY = (int) (core.mouseY / Tile.WIDTH - 1.5f);
+        Tile clickedTile = map.getTile(posX, posY);
+
+        switch (mode) {
+            case BUILD:
+                switch (core.mouseButton) {
+                    case PConstants.LEFT:
+                        map.setTile(posX, posY, new Tile(core, posX, posY, buildModeTile.getId()));
+                        break;
+                    case PConstants.RIGHT:
+                        int id = buildModeTile.getId();
+                        id++;
+                        if (id > Tile.HIGHEST_ID) id = 0;
+                        buildModeTile = new Tile(core, -1, -1, id);
+                        break;
+                    case PConstants.CENTER:
+                        buildModeTile = new Tile(core, -1, -1, clickedTile.getId());
+                        break;
+                }
+                break;
+            case PLACE:
+                switch (core.mouseButton) {
+                    case PConstants.LEFT:
+                        Creature.create(core, posX, posY, 'x');
+                        break;
+                    case PConstants.RIGHT:
+                        Item.create(core, posX, posY, 'i');
+                        break;
+                    case PConstants.CENTER:
+                        //currently unused
+                        break;
+                }
+                break;
+            case DEBUG:
+                if (core.mouseButton == PConstants.CENTER) {
+                    sendTextBubble("test" + counter);
+                    counter++;
+                }
+            case PLAY:
+                if (player.isMyTurn()) {
+                    if (player.getTile().getNeighboursWithCreatures().contains(clickedTile)) {
+                        player.attack(clickedTile.getCreature());
+                    } else if (player.getMovepool().contains(clickedTile)) {
+                        player.setNextMoves(map.astar(player.getTile(), clickedTile));
+                    } else if ((core.mouseX > (16 * Tile.WIDTH)) && (core.mouseY < Tile.WIDTH) && (core.mouseButton == PConstants.LEFT)) {
+                        nextTurn();
+                    } else if (clickedTile!=null) {
+                        sendTextBubble("Not enough AP!");
+                    }
+                }
+                break;
         }
     }
 

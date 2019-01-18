@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 public class Inventory {
 
-    private Core core;
+    private final Core core;
 
-    private ArrayList<Item> items;
+    private final ArrayList<Item> items;
 
     public Inventory(Core core) {
         this.core = core;

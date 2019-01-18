@@ -1,5 +1,6 @@
 package de.tfour.main.java;
 
+import processing.core.PApplet;
 import processing.core.PConstants;
 
 import java.util.ArrayList;
@@ -7,13 +8,14 @@ import java.util.Collections;
 
 public class Tile {
 
-    private Core core;
+    private final Core core;
 
     public static final float WIDTH = 32;
     public static final int HIGHEST_ID = 6;
 
-    private int x, y;
-    private String name;
+    private final int x;
+    private final int y;
+    private final String name;
     private int colorBase;
     private int colorCurrent;
 
@@ -25,9 +27,9 @@ public class Tile {
     private char model = ' ';
     private boolean solid;
 
-    private ArrayList<Item> items;
+    private final ArrayList<Item> items;
     private Creature creature;
-    private int id;
+    private final int id;
 
     private ANIMATION_TYPE animated;
 
@@ -48,33 +50,35 @@ public class Tile {
             default:
             case 0: //grass
                 this.name = "Grass";
-                this.colorBase = core.color(core.unhex("ff34a870"));
+                this.colorBase = core.color(PApplet.unhex("ff34a870"));
                 break;
             case 1: //stone
                 this.name = "Stone";
-                this.colorBase = core.color(core.unhex("ff6d7078"));
+                this.colorBase = core.color(PApplet.unhex("ff6d7078"));
                 this.solid = true;
                 break;
             case 2: //water
                 this.name = "Water";
-                this.colorBase = core.color(core.unhex("ff1f50cc"));
+                this.colorBase = core.color(PApplet.unhex("ff1f50cc"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SPARKLY;
+                this.model='~';
                 break;
             case 3: //lava
                 this.name = "Lava";
-                this.colorBase = core.color(core.unhex("fff52025"));
+                this.colorBase = core.color(PApplet.unhex("fff52025"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SPARKLY;
+                this.model='~';
                 break;
             case 4: //water shallow
                 this.name = "ShallowWater";
-                this.colorBase = core.color(core.unhex("ff407cff"));
+                this.colorBase = core.color(PApplet.unhex("ff407cff"));
                 this.animated = ANIMATION_TYPE.SPARKLY;
                 break;
             case 5: //lava shallow
                 this.name = "ShallowLava";
-                this.colorBase = core.color(core.unhex("ffcc7a47"));
+                this.colorBase = core.color(PApplet.unhex("ffcc7a47"));
                 this.animated = ANIMATION_TYPE.SPARKLY;
                 this.tileEvent = new TileEvent() {
                     @Override
@@ -85,13 +89,13 @@ public class Tile {
                 break;
             case 6: //gold
                 this.name = "Gold";
-                this.colorBase = core.color(core.unhex("fff2a53f"));
+                this.colorBase = core.color(PApplet.unhex("fff2a53f"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SHINY;
                 break;
             case 7: //carpet
                 this.name = "Carpet";
-                this.colorBase = core.color(core.unhex("ffa63a3a"));
+                this.colorBase = core.color(PApplet.unhex("ffa63a3a"));
                 break;
         }
         this.items = new ArrayList<>();
@@ -178,13 +182,13 @@ public class Tile {
 
     public String toString() {
         String creatureName = (creature == null) ? "{}" : creature.toString();
-        String entitystring = "Entities = {";
+        StringBuilder entitystring = new StringBuilder("Entities = {");
         for (Item e : items) {
             if (e != null) {
-                entitystring += e.toString() + "\n";
+                entitystring.append(e.toString()).append("\n");
             }
         }
-        entitystring += "}";
+        entitystring.append("}");
         return "Tile " + model + ":\n" +
                 "x = " + x + "\n" +
                 "y = " + y + "\n" +
@@ -205,7 +209,7 @@ public class Tile {
         return items.add(e);
     }
 
-    public static int getDistance(Tile a, Tile b) {
+    private static int getDistance(Tile a, Tile b) {
         return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY());
     }
 
@@ -213,8 +217,8 @@ public class Tile {
         this.colorBase = core.color(255, 0, 0);
     }
 
-    public ArrayList<Tile> getNeighbours() {
-        ArrayList neighbours = new ArrayList();
+    private ArrayList<Tile> getNeighbours() {
+        ArrayList<Tile> neighbours = new ArrayList<>();
         neighbours.add(core.getGame().getMap().getTile(x + 1, y));
         neighbours.add(core.getGame().getMap().getTile(x, y + 1));
         neighbours.add(core.getGame().getMap().getTile(x - 1, y));
@@ -230,13 +234,8 @@ public class Tile {
     }
 
     public ArrayList<Tile> getViableNeighbours() {
-        ArrayList<Tile> neighbours = new ArrayList();
-        neighbours.add(core.getGame().getMap().getTile(x + 1, y));
-        neighbours.add(core.getGame().getMap().getTile(x, y + 1));
-        neighbours.add(core.getGame().getMap().getTile(x - 1, y));
-        neighbours.add(core.getGame().getMap().getTile(x, y - 1));
-        neighbours.removeAll(Collections.singleton(null));
-        neighbours.removeIf(t -> t.isSolid());
+        ArrayList<Tile> neighbours = getNeighbours();
+        neighbours.removeIf(Tile::isSolid);
         neighbours.removeIf(t -> t.getCreature() != null);
         return neighbours;
     }
@@ -244,7 +243,7 @@ public class Tile {
     public Tile getRandomViableNeighbour() {
         ArrayList<Tile> viables = getViableNeighbours();
         if (viables.size() == 0) return null;
-        int randindex = core.floor(core.random(viables.size()));
+        int randindex = PApplet.floor(core.random(viables.size()));
         return viables.get(randindex);
     }
 

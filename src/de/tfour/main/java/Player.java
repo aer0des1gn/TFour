@@ -1,5 +1,6 @@
 package de.tfour.main.java;
 
+import processing.core.PApplet;
 import processing.core.PImage;
 
 public class Player extends Creature {
@@ -18,7 +19,7 @@ public class Player extends Creature {
         this.name = "Player";
         this.img = new PImage[12];
         for (int i = 0; i < 12; i++) {
-            img[i] = core.loadImage("src/de/tfour/main/resources/player/p"+core.nf(i,2)+".png");
+            img[i] = core.loadImage("src/de/tfour/main/resources/player/p"+ PApplet.nf(i,2)+".png");
         }
     }
 
