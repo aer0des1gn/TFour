@@ -8,6 +8,8 @@ public class Inventory {
 
     private final ArrayList<Item> items;
 
+    public static final int ITEMSTACK_MAX = 4;
+
     public Inventory(Core core) {
         this.core = core;
         this.items = new ArrayList<>();

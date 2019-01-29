@@ -40,26 +40,32 @@ public class Item {
         float yScale = 0.5f;
         float itemSize = Tile.WIDTH * 0.35f;
         if (total != 1) {
-            if (pos == 0) {
-                xScale = 0.25f;
-                if (total != 2) {
-                    yScale = 0.25f;
-                }
-            } else if (pos == 1) {
-                xScale = 0.75f;
-                if (total != 2) {
-                    yScale = 0.25f;
-                }
-            } else if (pos == 2) {
-                yScale = 0.75f;
-                if (total != 3) {
+            switch (pos) {
+                case 0:
                     xScale = 0.25f;
-                }
-            } else if (pos == 3) {
-                xScale = 0.75f;
-                yScale = 0.75f;
-            } else {
-                PApplet.println("ERROR, itemSize for Tile is <" + total + "> instead of max 4!");
+                    if (total != 2) {
+                        yScale = 0.25f;
+                    }
+                    break;
+                case 1:
+                    xScale = 0.75f;
+                    if (total != 2) {
+                        yScale = 0.25f;
+                    }
+                    break;
+                case 2:
+                    yScale = 0.75f;
+                    if (total != 3) {
+                        xScale = 0.25f;
+                    }
+                    break;
+                case 3:
+                    xScale = 0.75f;
+                    yScale = 0.75f;
+                    break;
+                default:
+                    PApplet.println("ERROR, itemSize for Tile is <" + total + "> instead of max 4!");
+                    break;
             }
         }
         core.ellipse(x * Tile.WIDTH + Tile.WIDTH * xScale, y * Tile.WIDTH + Tile.WIDTH * yScale, itemSize, itemSize);

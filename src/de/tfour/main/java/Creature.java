@@ -75,7 +75,7 @@ public class Creature {
         return c;
     }
 
-    //constructor. direct use of the constructor is not recommended, because tile is not assigned. use create() instead.
+    //constructor. direct use of the constructor is not recommended, because it does not assign the creature to a tile. use create() instead.
     Creature(Core core, int x, int y, char model) {
         this.core = core;
         creaturecount++;

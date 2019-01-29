@@ -62,14 +62,14 @@ public class Tile {
                 this.colorBase = core.color(PApplet.unhex("ff1f50cc"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SPARKLY;
-                this.model='~';
+                this.model = '~';
                 break;
             case 3: //lava
                 this.name = "Lava";
                 this.colorBase = core.color(PApplet.unhex("fff52025"));
                 this.solid = true;
                 this.animated = ANIMATION_TYPE.SPARKLY;
-                this.model='~';
+                this.model = '~';
                 break;
             case 4: //water shallow
                 this.name = "ShallowWater";
@@ -129,15 +129,13 @@ public class Tile {
                 float g = core.green(colorBase);
                 float b = core.blue(colorBase);
                 if (animated == ANIMATION_TYPE.SHINY) {
-                    float rand1 = Core.sin(Game.theta) * amp;
-                    colorCurrent = (core.color(r + rand1, g + rand1, b + rand1));
-                } else if (animated == ANIMATION_TYPE.SPARKLY) {
-                    if (core.frameCount % 30 == 0) {
-                        float rand1 = core.random(-amp, amp);
-                        float rand2 = core.random(-amp, amp);
-                        float rand3 = core.random(-amp, amp);
-                        colorCurrent = (core.color(r + rand1, g + rand2, b + rand3));
-                    }
+                    float colOffset = Core.sin(Game.theta) * amp;
+                    colorCurrent = (core.color(r + colOffset, g + colOffset, b + colOffset));
+                } else if (animated == ANIMATION_TYPE.SPARKLY && core.frameCount % 30 == 0) {
+                    float rand1 = core.random(-amp, amp);
+                    float rand2 = core.random(-amp, amp);
+                    float rand3 = core.random(-amp, amp);
+                    colorCurrent = (core.color(r + rand1, g + rand2, b + rand3));
                 }
                 core.fill(colorCurrent);
             } else {
@@ -206,7 +204,7 @@ public class Tile {
     }
 
     public boolean addItem(Item e) {
-        if (items.size() >= 4) return false;
+        if (items.size() >= Inventory.ITEMSTACK_MAX) return false;
         return items.add(e);
     }
 
